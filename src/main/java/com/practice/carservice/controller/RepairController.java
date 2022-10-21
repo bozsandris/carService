@@ -45,7 +45,7 @@ public class RepairController {
         repair.setCar(carService.addNewCar(car));
         repairService.addNewRepair(repair);
         emailService.sendEmail(
-                "bozsandris@gmail.com",
+                user.getEmail(),
                 "Repair registration",
                 String.format(
                         CAR_REG_EMAIL_SCHEMA,
