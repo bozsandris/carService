@@ -5,6 +5,7 @@ import com.auth0.jwt.algorithms.Algorithm;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.practice.carservice.security.JwtConfig;
 import com.practice.carservice.service.UserServiceImpl;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -15,7 +16,6 @@ import org.springframework.security.core.userdetails.User;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 import javax.servlet.FilterChain;
-import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
@@ -26,17 +26,12 @@ import java.util.stream.Collectors;
 
 import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 
+@RequiredArgsConstructor
 @Slf4j
 public class CustomAuthenticationFilter extends UsernamePasswordAuthenticationFilter {
     private final UserServiceImpl userService;
     private final AuthenticationManager authenticationManager;
     private final JwtConfig jwtConfig;
-
-    public CustomAuthenticationFilter(UserServiceImpl userService, AuthenticationManager authenticationManager, JwtConfig jwtConfig) {
-        this.userService = userService;
-        this.authenticationManager = authenticationManager;
-        this.jwtConfig = jwtConfig;
-    }
 
     @Override
     public Authentication attemptAuthentication(HttpServletRequest request,

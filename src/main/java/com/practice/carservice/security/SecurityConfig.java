@@ -7,54 +7,66 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
+import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
+import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
-import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.security.web.authentication.logout.HttpStatusReturningLogoutSuccessHandler;
 
 import static org.springframework.security.config.http.SessionCreationPolicy.STATELESS;
 
 @Configuration
 @EnableWebSecurity
 @RequiredArgsConstructor
-public class SecurityConfig extends WebSecurityConfigurerAdapter {
+public class SecurityConfig {
     private final UserDetailsService userDetailsService;
     private final BCryptPasswordEncoder bCryptPasswordEncoder;
     private final JwtConfig jwtConfig;
     private final UserServiceImpl userService;
 
-    @Override
-    protected void configure(AuthenticationManagerBuilder auth) throws Exception {
-        auth.userDetailsService(userDetailsService).passwordEncoder(bCryptPasswordEncoder);
-    }
-
-    @Override
-    protected void configure(HttpSecurity http) throws Exception {
-        http.csrf().disable();
-        http.sessionManagement().sessionCreationPolicy(STATELESS);
-        http.cors().and()
-                .authorizeRequests()
+    @Bean
+    protected SecurityFilterChain securityFilterChain(HttpSecurity http, final AuthenticationConfiguration authenticationConfiguration) throws Exception {
+        AuthenticationManager authenticationManager = http.getSharedObject(AuthenticationManager.class);
+        http.csrf(csrf -> csrf.disable())
+            .sessionManagement(session -> session.sessionCreationPolicy(STATELESS))
+            .cors()
+            .and()
+            .authorizeRequests(auth -> {
                 //order based decline!!!!
-                .antMatchers("/*", "/static/**", "/#/*", "/api/v1/register", "/api/v1/token/refresh").permitAll()
-                .antMatchers(HttpMethod.GET,"/api/v1/carpart").hasAnyAuthority("ROLE_MECHANIC")
-                .antMatchers(HttpMethod.POST,"/api/v1/carpart").hasAnyAuthority("ROLE_ADMIN")
-                .antMatchers("/api/v1/repair/manage/**").hasAnyAuthority("ROLE_MECHANIC", "ROLE_ADMIN")
-                .anyRequest().authenticated()
-                .and()
-                .logout()
-                    .logoutUrl("/logout")
-                    .logoutSuccessUrl("/#/login");
-        http.addFilter(new CustomAuthenticationFilter(userService, authenticationManagerBean(), jwtConfig));
+                auth.antMatchers("/*", "/static/**", "/api/v1/register", "/api/v1/token/refresh").permitAll();
+                auth.antMatchers(HttpMethod.GET,"/api/v1/carpart").hasAnyAuthority("ROLE_MECHANIC");
+                auth.antMatchers(HttpMethod.POST,"/api/v1/carpart").hasAnyAuthority("ROLE_ADMIN");
+                auth.antMatchers("/api/v1/repair/manage/**").hasAnyAuthority("ROLE_MECHANIC", "ROLE_ADMIN");
+                auth.anyRequest().authenticated();
+            })
+            .logout(logout -> {
+                    logout.logoutUrl("/logout");
+                    logout.logoutSuccessHandler(new HttpStatusReturningLogoutSuccessHandler(HttpStatus.OK));
+            });
+        http.addFilter(new CustomAuthenticationFilter(userService, authenticationManagerBean(authenticationConfiguration), jwtConfig));
         http.addFilterBefore(new CustomAuthorizationFilter(jwtConfig), UsernamePasswordAuthenticationFilter.class);
+
+        http.authenticationProvider(daoAuthenticationProvider());
+
+        return http.build();
     }
 
     @Bean
-    @Override
-    public AuthenticationManager authenticationManagerBean() throws Exception {
-        return super.authenticationManager();
+    public AuthenticationManager authenticationManagerBean(AuthenticationConfiguration configuration) throws Exception {
+        return configuration.getAuthenticationManager();
+    }
+
+    @Bean
+    public DaoAuthenticationProvider daoAuthenticationProvider() {
+        DaoAuthenticationProvider provider = new DaoAuthenticationProvider();
+        provider.setUserDetailsService(this.userDetailsService);
+        provider.setPasswordEncoder(this.bCryptPasswordEncoder);
+        return provider;
     }
 }

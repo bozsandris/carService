@@ -4,6 +4,7 @@ import com.practice.carservice.domain.Car;
 import com.practice.carservice.domain.Repair;
 import com.practice.carservice.domain.User;
 import com.practice.carservice.service.CarService;
+import com.practice.carservice.service.EmailService;
 import com.practice.carservice.service.RepairService;
 import com.practice.carservice.service.UserServiceImpl;
 import lombok.Data;
@@ -19,9 +20,16 @@ import java.net.URI;
 @RequiredArgsConstructor
 public class RepairController {
 
+    private static final String CAR_REG_EMAIL_SCHEMA =
+            "Dear %s!\n\n" +
+                    "Your car %s %s (%s) has been registered for repair. Thanks for choosing us.\n\n" +
+                    "Have a nice day,\n" +
+                    "Car Service Team";
+
     private final RepairService repairService;
     private final CarService carService;
     private final UserServiceImpl userService;
+    private final EmailService emailService;
 
     @GetMapping(path = {"car/{carId}"})
     public Repair getRepairForCarId(@PathVariable("carId") Long carId) {
@@ -36,6 +44,15 @@ public class RepairController {
         Repair repair = car.getRepair();
         repair.setCar(carService.addNewCar(car));
         repairService.addNewRepair(repair);
+        emailService.sendEmail(
+                "bozsandris@gmail.com",
+                "Repair registration",
+                String.format(
+                        CAR_REG_EMAIL_SCHEMA,
+                        user.getFirstName(),
+                        car.getBrand(),
+                        car.getModel(),
+                        car.getLicensePlate()));
         URI uri = URI.create(ServletUriComponentsBuilder.fromCurrentContextPath().path("/api/v1/repair").toUriString());
         return ResponseEntity.created(uri).body(repair);
     }
