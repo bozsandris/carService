@@ -76,7 +76,7 @@ public class RepairController {
     }
 
     @Data
-    public static class RepairForm {
+    private static class RepairForm {
         private Car car;
         private String userid;
     }

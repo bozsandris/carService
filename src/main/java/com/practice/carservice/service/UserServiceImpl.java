@@ -13,6 +13,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.stereotype.Service;
 
+import javax.management.relation.RoleNotFoundException;
 import javax.transaction.Transactional;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -90,5 +91,16 @@ public class UserServiceImpl implements UserService, UserDetailsService {
 
         log.info("Adding role {} to user {}", roleName, username);
         user.getRoles().add(role);
+    }
+
+    public void revokeRoleToUser(String username, String roleName) {
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new UsernameNotFoundException("User: " + username + " does not exist"));
+
+        Role role = roleRepository.findByName(roleName)
+                .orElseThrow(() -> new IllegalStateException("Role called: " + roleName + " does not exist"));
+
+        log.info("Revoking role {} from user {}", roleName, username);
+        user.getRoles().remove(role);
     }
 }

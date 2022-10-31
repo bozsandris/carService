@@ -39,6 +39,15 @@ public class UserController {
         return ResponseEntity.ok().body(userService.getUsers());
     }
 
+    @GetMapping("/manage/users")
+    public ResponseEntity<List<User>>getManagableUsers() {
+        return ResponseEntity.ok().body(
+                userService.getUsers().stream()
+                        .filter(user -> !user.getRoles().contains(new Role("ROLE_ADMIN")))
+                        .toList()
+        );
+    }
+
     @GetMapping("/user/{userId}")
     public User getUser(@PathVariable("userId") Long userId) {
         return userService.getUserById(userId);
@@ -64,6 +73,12 @@ public class UserController {
     @PostMapping("/user/addRole")
     public ResponseEntity<?> addRoleToUser(@RequestBody RoleToUserForm form) {
         userService.addRoleToUser(form.getUsername(), form.getRoleName());
+        return ResponseEntity.ok().build();
+    }
+
+    @PostMapping("/user/revokeRole")
+    public ResponseEntity<?> revokeRoleToUser(@RequestBody RoleToUserForm form) {
+        userService.revokeRoleToUser(form.getUsername(), form.getRoleName());
         return ResponseEntity.ok().build();
     }
 
@@ -128,7 +143,7 @@ public class UserController {
     }
 
     @Data
-    class RoleToUserForm {
+    private static class RoleToUserForm {
         private String username;
         private String roleName;
     }
