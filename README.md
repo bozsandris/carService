@@ -11,6 +11,6 @@ Web application for managing car services, written in React & Spring, made for p
 ## Planned features:
 - ~~Email notification of car registration~~
 - Email verification on registration
-- User management for admins (Add and revoke mechanic role)
+- ~~User management for admins (Add and revoke mechanic role)~~
 - Verification of car registration, so that it does not instantly appear on the lists until it's manually accepted for service by a mechanic
 - More to come
