@@ -9,6 +9,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -51,7 +52,7 @@ public class SecurityConfig {
         http.addFilter(new CustomAuthenticationFilter(userService, authenticationManagerBean(authenticationConfiguration), jwtConfig));
         http.addFilterBefore(new CustomAuthorizationFilter(jwtConfig), UsernamePasswordAuthenticationFilter.class);
 
-        http.authenticationProvider(daoAuthenticationProvider());
+        http.authenticationProvider(authenticationProvider());
 
         return http.build();
     }
@@ -62,8 +63,8 @@ public class SecurityConfig {
     }
 
     @Bean
-    public DaoAuthenticationProvider daoAuthenticationProvider() {
-        DaoAuthenticationProvider provider = new DaoAuthenticationProvider();
+    public AuthenticationProvider authenticationProvider() {
+        final DaoAuthenticationProvider provider = new DaoAuthenticationProvider();
         provider.setUserDetailsService(this.userDetailsService);
         provider.setPasswordEncoder(this.bCryptPasswordEncoder);
         return provider;

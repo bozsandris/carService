@@ -40,8 +40,9 @@ public class RepairService {
     }
 
     public void updateRepair(Repair repair) {
-        repairRepository.findById(repair.getId())
-                .orElseThrow(() -> new IllegalStateException("Repair with id: " + repair.getId() + " does not exists."));
+        if (!repairRepository.existsById(repair.getId())) {
+                throw new IllegalStateException("Repair with id: " + repair.getId() + " does not exists.");
+        }
 
         log.info("Updating repair details for car with id {}", repair.getCar().getId());
         repairRepository.save(repair);

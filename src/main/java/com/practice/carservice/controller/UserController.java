@@ -49,12 +49,12 @@ public class UserController {
     }
 
     @GetMapping("/user/{userId}")
-    public User getUser(@PathVariable("userId") Long userId) {
+    public User getUserById(@PathVariable("userId") Long userId) {
         return userService.getUserById(userId);
     }
 
-    @GetMapping("/user{email}")
-    public ResponseEntity<User> getUser(@PathVariable("email") String email) {
+    @GetMapping("/user/{email}")
+    public ResponseEntity<User> getUserByEmail(@PathVariable("email") String email) {
         return ResponseEntity.ok().body(userService.getUserByUsername(email));
     }
 
